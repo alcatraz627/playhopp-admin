@@ -1,0 +1,22 @@
+html,
+body {
+    padding: 0;
+    margin: 0;
+}
+
+// .center {
+//     text-align: center;
+// }
+
+
+[hidden] {
+    display: none;
+}
+
+@import '../../node_modules/bootstrap/dist/css/bootstrap.min.css';
+
+.loadingSpinnerContainer {
+    width: 100%;
+    padding-top: 300px!important;
+    text-align: center;
+}
