@@ -132,13 +132,16 @@ const MODAL_FIELDS = {
     ],
 }
 
-const API_ROOT = '//localhost:8000/api/'
+const API_ROOT = '/api/'
+// const API_ROOT = '//localhost:8000/api/'
 
 const App = () => {
 
     const [isModalOpen, setModalOpen] = useState(false)
-    const [modalKey, setModalKey] = useState(null) // Key for type of data being processed by the modal
-    const [modalFields, setModalFields] = useState(null) // Data being entered in the modal
+    const [modalKey, setModalKey] = useState(null) // Key for type of data being processed by the modal (customer, toy, brand, etc)
+    const [modalFields, setModalFields] = useState(null) // Data being entered in the modal ( email, address, etc.)
+
+    const [modalObjectKey, setModalObjectKey] = useState(null) // Key of the object, eg: email ID, brand ID. If present, edit mode, else add mode :)
 
     const [appErr, setAppErr] = useState([])
     const [appMsg, setAppMsg] = useState([])
@@ -163,20 +166,16 @@ const App = () => {
     }, [users, categories, brands])
 
     const openModal = () => { setModalOpen(true) }
-    const closeModal = () => { setModalOpen(false); setModalFields({}) }
+    const closeModal = () => { setModalOpen(false); setModalFields({}); setModalKey(null); setModalObjectKey(null) }
 
     const handleModalFieldsChange = ({ target }) => {
         setModalFields({ ...modalFields, [target.name]: target.value })
     }
 
     const handleModalSubmit = () => {
-        console.log("Submit:", modalFields);
-        // For add only rn
-        axios.post(`${API_ROOT}${TABS[modalKey].key}/`, modalFields)
-            .then(resp => {
 
-                // console.log({ [resp.data[TABS[modalKey].uid]]: resp.data })
-                // console.log({ ...TABS[modalKey].data, [resp.data[TABS[modalKey].uid]]: resp.data })
+        (modalObjectKey ? axios.patch : axios.post)(`${API_ROOT}${TABS[modalKey].key}/${modalObjectKey ? `${modalObjectKey}/` : ''}`, modalFields)
+            .then(resp => {
 
                 TABS[modalKey].setter({ ...TABS[modalKey].data, [resp.data[TABS[modalKey].uid]]: resp.data })
 
@@ -206,8 +205,7 @@ const App = () => {
     const fetchData = () => {
         Object.values(TABS).map(tab =>
             axios.get(`${API_ROOT}${tab.key}/`)
-                .then(resp => { console.log(resp); tab.setter(_.zipObject(resp.data.map(e => e[tab.uid]), resp.data)) })
-                .then(e => { console.log('Complete') })
+                .then(resp => { tab.setter(_.zipObject(resp.data.map(e => e[tab.uid]), resp.data)) })
                 .catch(err => { console.log(err); pushAppErr(JSON.stringify(err)) })
         )
     }
@@ -216,20 +214,17 @@ const App = () => {
         Object.values(TABS).map(e => e.key),
 
         Object.values(TABS).map(tab =>
-            (id) =>
-            //  axios.delete(`${API_ROOT}${tab.key}/${id}/`)
-            //     .then(resp =>
-            {
-                let newState = { ...tab.data }
-                let verbose = newState[id][tab.verbose]
-                delete newState[id]
-                console.log(newState)
-                tab.setter(newState)
+            (id) => axios.delete(`${API_ROOT}${tab.key}/${id}/`)
+                .then(resp => {
+                    let newState = { ...tab.data }
+                    let verbose = newState[id][tab.verbose]
+                    delete newState[id]
 
-                pushAppMsg(`[${tab.singular}] ${verbose} deleted succesfully!`)
-            }
-            // )
-            // .catch(err => { console.log(err); pushAppErr(JSON.stringify(err)) })
+                    tab.setter(newState)
+
+                    pushAppMsg(`[${tab.singular}] ${verbose} deleted succesfully!`)
+                })
+                .catch(err => { console.log(err); pushAppErr(JSON.stringify(err)) })
         )
     )
 
@@ -238,14 +233,27 @@ const App = () => {
         openModal()
     }
 
+    const editEntry = (dataType, id) => e => {
+        setModalObjectKey(id)
+        setModalKey(dataType)
+        // console.log(id)
+        openModal()
+    }
+
+
+
     useEffect(() => {
         modalKey && setModalFields(_.zipObject(MODAL_FIELDS[modalKey].map(e => e.key), MODAL_FIELDS[modalKey].map(e => '')))
-        return () => { setModalFields({}) }
+        // return () => { setModalFields({}) }
     }, [modalKey])
 
     useEffect(() => {
+        modalKey && modalObjectKey && setModalFields(_.zipObject(MODAL_FIELDS[modalKey].map(e => e.key), MODAL_FIELDS[modalKey].map(e => TABS[modalKey].data[modalObjectKey][e.key])))
+        // return () => { setModalFields({}) }
+    }, [modalObjectKey])
+
+    useEffect(() => {
         fetchData()
-        // setBrands({ 2: { id: 2, title: 'eee' } })
     }, [])
 
     return (
@@ -256,14 +264,11 @@ const App = () => {
             </Navbar>
             <br />
             <Container>
-                {appErr.map((e, i) => <Alert key={`${e}-${i}`} variant="danger" dismissible onClose={handleErrAlertClose(e)}>{e}</Alert>)}
-                {appMsg.map((e, i) => <Alert key={`${e}-${i}`} variant="success" dismissible onClose={handleMsgAlertClose(e)}>{e}</Alert>)}
                 <br />
                 <Tabs>
                     {Object.values(TABS).map(tabData => (
                         <Tab key={tabData.key} eventKey={tabData.key} title={tabData.title}>
                             <br />
-                            {JSON.stringify(tabData.data)}
                             {Object.keys(tabData.data).length == 0 ? <div className="loadingSpinnerContainer"><Spinner animation="border" variant="info" /> </div> :
                                 <>
                                     <Button variant="success" style={{ float: 'right' }} onClick={createEntry(tabData.key)}>Add {tabData.singular}</Button>
@@ -287,9 +292,9 @@ const App = () => {
                                                     {Object.keys(TABLE_DATA[tabData.key].fields).map(f => (<td key={f}>{dataSource[f]}</td>))}
                                                     <td>
                                                         <ButtonToolbar>
-                                                            <Button variant="outline-primary">Edit</Button>
+                                                            <Button variant="outline-primary" onClick={editEntry(tabData.key, dataSource[tabData.uid])}>Edit</Button>
                                                             &nbsp;&nbsp;
-                                                    <Button variant="outline-danger" onClick={() => deleteMethods[tabData.key](dataSource[tabData.uid])}>Delete</Button>
+                                                            <Button variant="outline-danger" onClick={() => deleteMethods[tabData.key](dataSource[tabData.uid])}>Delete</Button>
                                                         </ButtonToolbar>
                                                     </td>
                                                 </tr>
@@ -304,6 +309,11 @@ const App = () => {
                         </Tab>
                     ))}
                 </Tabs>
+                <br />
+                {appErr.map((e, i) => <Alert key={`${e}-${i}`} variant="danger" dismissible onClose={handleErrAlertClose(e)}>{e}</Alert>)}
+                {appMsg.map((e, i) => <Alert key={`${e}-${i}`} variant="success" dismissible onClose={handleMsgAlertClose(e)}>{e}</Alert>)}
+
+                <br />
 
             </Container>
             {modalKey && modalFields &&
@@ -312,7 +322,7 @@ const App = () => {
                     <Modal.Body>
                         {/* {JSON.stringify(MODAL_FIELDS[modalFields])} */}
                         {MODAL_FIELDS[modalKey].map(fields => (
-                            <Form key={fields.key} style={{ padding: '10px 30px', margin: 'auto' }}>
+                            <Form key={fields.key} style={{ padding: '10px 30px', margin: 'auto' }} onSubmit={e => { e.preventDefault(); handleModalSubmit() }}>
                                 <Form.Group>
                                     <Form.Label>{fields.label}</Form.Label>
                                     <Form.Control name={fields.key} type={fields.type || 'text'} placeholder={`Enter ${fields.label}`}
