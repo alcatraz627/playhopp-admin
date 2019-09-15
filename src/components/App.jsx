@@ -12,7 +12,8 @@ const _tabTemplate = {
 let _tabKeys = {
     customers: 'customers',
     categories: 'categories',
-    brands: 'brands'
+    brands: 'brands',
+    toys: 'toys',
 }
 
 let TABS = {
@@ -20,7 +21,7 @@ let TABS = {
         // ..._tabTemplate,
         data: undefined,
         setter: undefined,
-        key: [_tabKeys.customers],
+        key: _tabKeys.customers,
         title: 'Customers',
         singular: 'Customer',
         verbose: 'username',
@@ -31,7 +32,7 @@ let TABS = {
         // ..._tabTemplate,
         data: undefined,
         setter: undefined,
-        key: [_tabKeys.categories],
+        key: _tabKeys.categories,
         title: 'Categories',
         singular: 'Category',
         verbose: 'title',
@@ -42,43 +43,63 @@ let TABS = {
         // ..._tabTemplate,
         data: undefined,
         setter: undefined,
-        key: [_tabKeys.brands],
+        key: _tabKeys.brands,
         title: 'Brands',
         singular: 'Brand',
         verbose: 'title',
 
         uid: 'id',
     },
-    // toys: 'Toys',
-    // brands: 'Brands',
-}
+    [_tabKeys.toys]: {
+        // ..._tabTemplate,
+        data: undefined,
+        setter: undefined,
+        key: _tabKeys.toys,
+        title: 'Toys',
+        singular: 'Toy',
+        verbose: 'title',
 
-const TABLE_DATA = {
-    [TABS.customers.key]: {
+        uid: 'id',
+    },
+};
+
+console.log(TABS);
+
+let TABLE_DATA = {
+    [_tabKeys.customers]: {
         fields: {
             username: "Email ID",
             first_name: "Name",
             address: "Address",
             contact_number: "Contact Number",
         },
-        // actions:
     },
-    [TABS.categories.key]: {
+    [_tabKeys.categories]: {
         fields: {
             title: "Title",
         },
-        // actions:
     },
-    [TABS.brands.key]: {
+    [_tabKeys.brands]: {
         fields: {
             title: "Title",
         },
-        // actions:
+    },
+    [_tabKeys.toys]: {
+        fields: {
+            title: "Title",
+            description: "Description",
+            skills: "Skills",
+            platIdeas: "Play Ideas",
+            minAge: 'Min Age',
+            maxAge: 'Max Age',
+            brand: 'Brand',
+            category: 'Category',
+        },
     },
 }
 
 const MODAL_FIELDS = {
-    [TABS.brands.key]: [
+    [_tabKeys.brands]: [
         {
             key: 'title',
             type: 'text',
@@ -86,7 +107,7 @@ const MODAL_FIELDS = {
             validator: e => e.length > 1
         }
     ],
-    [TABS.categories.key]: [
+    [_tabKeys.categories]: [
         {
             key: 'title',
             type: 'text',
@@ -94,7 +115,85 @@ const MODAL_FIELDS = {
             validator: e => e.length > 1
         }
     ],
-    [TABS.customers.key]: [
+
+    [_tabKeys.toys]: [
+        {
+            key: 'title',
+            type: 'text',
+            label: 'Toy Title',
+            validator: e => e.length > 1,
+        },
+        {
+            key: 'description',
+            type: 'text',
+            label: 'Description',
+            props: {
+                as: 'textarea',
+                rows: 3,
+            },
+            validator: e => e.length > 1,
+        },
+        {
+            key: 'skills',
+            type: 'text',
+            label: 'Skills',
+            props: {
+                as: 'textarea',
+                rows: 3,
+            },
+            validator: e => e.length > 1,
+        },
+        {
+            key: 'playIdeas',
+            type: 'text',
+            label: 'Play Ideas',
+            props: {
+                as: 'textarea',
+                rows: 3,
+            },
+            validator: e => e.length > 1,
+        },
+        {
+            key: 'minAge',
+            type: 'number',
+            label: 'Min Age',
+            // props: {
+            //     as: 'textarea',
+            //     rows: 3,
+            // },
+            validator: e => e.length > 1,
+        },
+        {
+            key: 'maxAge',
+            type: 'number',
+            label: 'Max Age',
+            // props: {
+            //     as: 'textarea',
+            //     rows: 3,
+            // },
+            validator: e => e.length > 1,
+        },
+        {
+            key: 'brand',
+            label: 'Brand',
+            props: {
+                as: 'select',
+                // multiple: true,
+            },
+            options: _tabKeys.brands,
+        },
+        {
+            key: 'category',
+            label: 'Category',
+            props: {
+                as: 'select',
+                // multiple: true,
+            },
+            options: _tabKeys.categories,
+        },
+    ],
+
+    [_tabKeys.customers]: [
         {
             key: 'username',
             type: 'text',
@@ -152,18 +251,23 @@ const App = () => {
     const [brands, setBrands] = useState({})
 
 
+
     TABS.customers.data = users;
-    TABS.customers.setter = data => { setUsers(data); console.log('User Data changing') };
+    TABS.customers.setter = data => { setUsers(data) };
 
     TABS.categories.data = categories;
-    TABS.categories.setter = data => { setCategories(data); console.log('Category Data changing') };
+    TABS.categories.setter = data => { setCategories(data) };
 
     TABS.brands.data = brands;
-    TABS.brands.setter = data => { setBrands(data); console.log('Brand Data changing') };
+    TABS.brands.setter = data => { setBrands(data) };
 
-    useEffect(() => {
-        console.log("Data Changed!")
-    }, [users, categories, brands])
+    TABS.toys.data = toys;
+    TABS.toys.setter = data => { setToys(data) };
+
+    TABLE_DATA[_tabKeys.toys].derived = {
+        brand: b => TABS[_tabKeys.brands].data[b] && TABS[_tabKeys.brands].data[b].title,
+        category: c => TABS[_tabKeys.categories].data[c] && TABS[_tabKeys.categories].data[c].title,
+    }
 
     const openModal = () => { setModalOpen(true) }
     const closeModal = () => { setModalOpen(false); setModalFields({}); setModalKey(null); setModalObjectKey(null) }
@@ -179,7 +283,7 @@ const App = () => {
 
                 TABS[modalKey].setter({ ...TABS[modalKey].data, [resp.data[TABS[modalKey].uid]]: resp.data })
 
-                pushAppMsg(`[${TABS[modalKey].singular}] ${resp.data[TABS[modalKey].verbose]} added succesfully!`)
+                pushAppMsg(`[${TABS[modalKey].singular}] ${resp.data[TABS[modalKey].verbose]} ${modalObjectKey ? 'updated' : 'added'} succesfully!`)
                 closeModal()
             })
             .catch(err => { console.log(err); pushAppErr(JSON.stringify(err)) })
@@ -240,8 +344,6 @@ const App = () => {
         openModal()
     }
 
-
-
     useEffect(() => {
         modalKey && setModalFields(_.zipObject(MODAL_FIELDS[modalKey].map(e => e.key), MODAL_FIELDS[modalKey].map(e => '')))
         // return () => { setModalFields({}) }
@@ -266,14 +368,17 @@ const App = () => {
             <Container>
                 <br />
                 <Tabs>
+
                     {Object.values(TABS).map(tabData => (
                         <Tab key={tabData.key} eventKey={tabData.key} title={tabData.title}>
+                            <pre>
+                                {JSON.stringify(modalFields, null, 2)}
+                            </pre>
                             <br />
-                            {Object.keys(tabData.data).length == 0 ? <div className="loadingSpinnerContainer"><Spinner animation="border" variant="info" /> </div> :
+                            {(!tabData.data || (Object.keys(tabData.data).length == 0)) ? <div className="loadingSpinnerContainer"><Spinner animation="border" variant="info" /> </div> :
                                 <>
                                     <Button variant="success" style={{ float: 'right' }} onClick={createEntry(tabData.key)}>Add {tabData.singular}</Button>
                                     <h3>{tabData.title}</h3>
-                                    {/* <Button>Add {TABS[tabKey]}</Button> */}
                                     <br />
                                     <br />
                                     <Table striped bordered hover>
@@ -289,13 +394,20 @@ const App = () => {
                                                 <tr key={dataSource[tabData.uid]}>
                                                     <td>{i + 1}</td>
 
-                                                    {Object.keys(TABLE_DATA[tabData.key].fields).map(f => (<td key={f}>{dataSource[f]}</td>))}
+                                                    {/* {Object.keys(TABLE_DATA[tabData.key].fields).map(f => (<td key={f}>{dataSource[f]}</td>))} */}
+                                                    {Object.keys(TABLE_DATA[tabData.key].fields).map(f =>
+                                                        (<td key={f}>
+                                                            {('derived' in TABLE_DATA[tabData.key]) && (f in TABLE_DATA[tabData.key].derived)
+                                                                ? `${(TABLE_DATA[tabData.key].derived[f](dataSource[f]))}`
+                                                                // ? TABLE_DATA[tabData.key].derived[f](dataSource[f])
+                                                                : dataSource[f]}
+                                                        </td>)
+                                                    )}
                                                     <td>
-                                                        <ButtonToolbar>
+                                                        <ButtonGroup>
                                                             <Button variant="outline-primary" onClick={editEntry(tabData.key, dataSource[tabData.uid])}>Edit</Button>
-                                                            &nbsp;&nbsp;
                                                             <Button variant="outline-danger" onClick={() => deleteMethods[tabData.key](dataSource[tabData.uid])}>Delete</Button>
-                                                        </ButtonToolbar>
+                                                        </ButtonGroup>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -320,13 +432,14 @@ const App = () => {
                 <Modal show={isModalOpen} onHide={closeModal} size="md">
                     <Modal.Header closeButton><Modal.Title>Add {TABS[modalKey].singular} </Modal.Title></Modal.Header>
                     <Modal.Body>
-                        {/* {JSON.stringify(MODAL_FIELDS[modalFields])} */}
                         {MODAL_FIELDS[modalKey].map(fields => (
                             <Form key={fields.key} style={{ padding: '10px 30px', margin: 'auto' }} onSubmit={e => { e.preventDefault(); handleModalSubmit() }}>
                                 <Form.Group>
                                     <Form.Label>{fields.label}</Form.Label>
                                     <Form.Control name={fields.key} type={fields.type || 'text'} placeholder={`Enter ${fields.label}`}
-                                        {...fields.props} onChange={handleModalFieldsChange} value={modalFields[fields.key] || ''} />
+                                        {...fields.props} onChange={handleModalFieldsChange} value={modalFields[fields.key] || ''}>
+                                        {fields.options && Object.keys(TABS[fields.options].data).map(f => <option value={f}>{TABS[fields.options].data[f].title}</option>)}
+                                    </Form.Control>
                                 </Form.Group>
                             </Form>
                         ))}
