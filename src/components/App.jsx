@@ -82,6 +82,7 @@ let TABLE_DATA = {
     [_tabKeys.brands]: {
         fields: {
             title: "Title",
+            id: "ID",
         },
     },
     [_tabKeys.toys]: {
@@ -92,6 +93,7 @@ let TABLE_DATA = {
             platIdeas: "Play Ideas",
             minAge: 'Min Age',
             maxAge: 'Max Age',
+            piecesNumber: 'Number of Pieces',
             brand: 'Brand',
             category: 'Category',
         },
@@ -157,28 +159,22 @@ const MODAL_FIELDS = {
             key: 'minAge',
             type: 'number',
             label: 'Min Age',
-            // props: {
-            //     as: 'textarea',
-            //     rows: 3,
-            // },
-            validator: e => e.length > 1,
         },
         {
             key: 'maxAge',
             type: 'number',
             label: 'Max Age',
-            // props: {
-            //     as: 'textarea',
-            //     rows: 3,
-            // },
-            validator: e => e.length > 1,
+        },
+        {
+            key: 'piecesNumber',
+            type: 'number',
+            label: 'Number of Pieces',
         },
         {
             key: 'brand',
             label: 'Brand',
             props: {
                 as: 'select',
-                // multiple: true,
             },
             options: _tabKeys.brands,
         },
@@ -231,7 +227,8 @@ const MODAL_FIELDS = {
     ],
 }
 
-const API_ROOT = '/api/'
+const API_ROOT = `http://35.154.205.76/api/`
+// const API_ROOT = '/api/'
 // const API_ROOT = '//localhost:8000/api/'
 
 const App = () => {
@@ -371,9 +368,9 @@ const App = () => {
 
                     {Object.values(TABS).map(tabData => (
                         <Tab key={tabData.key} eventKey={tabData.key} title={tabData.title}>
-                            <pre>
+                            {/* <pre>
                                 {JSON.stringify(modalFields, null, 2)}
-                            </pre>
+                            </pre> */}
                             <br />
                             {(!tabData.data || (Object.keys(tabData.data).length == 0)) ? <div className="loadingSpinnerContainer"><Spinner animation="border" variant="info" /> </div> :
                                 <>
