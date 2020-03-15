@@ -1,6 +1,7 @@
 const webpack = require('webpack')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
-module.exports = {
+module.exports = (env, options) => ({
     entry: './src/index.js',
     module: {
         rules: [{
@@ -15,9 +16,14 @@ module.exports = {
                 }
             },
             {
-                test: /\.(scss|sass|css)$/,
-                use: [
-                    'style-loader',
+                test: /\.(sc|sa|c)ss$/,
+                use: [{
+                        loader: MiniCssExtractPlugin.loader,
+                        options: {
+                            hmr: options.mode == 'development'
+                        }
+                    },
+                    // 'style-loader',
                     'css-loader',
                     'sass-loader',
                 ]
@@ -42,13 +48,26 @@ module.exports = {
     },
     plugins: [
         new webpack.HotModuleReplacementPlugin({}),
-
+        new webpack.DefinePlugin({
+            __MODE__: `"${options.mode}"`
+        }),
+        new MiniCssExtractPlugin({
+            filename: '[name].css',
+            chunkFilename: '[id].css',
+            ignoreOrder: false,
+        }),
     ],
     output: {
         path: __dirname + '/dist',
         publicPath: '/',
-        filename: 'bundle.js'
+        filename: 'bundle.js',
+        // filename: '[name].[hash].js',
     },
+    // optimization: {
+    //     splitChunks: {
+    //         chunks: 'all'
+    //     }
+    // },
     devServer: {
         disableHostCheck: true,
         contentBase: './dist',
@@ -63,4 +82,4 @@ module.exports = {
         //     }
         // }
     }
-}
+})
